@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUBSCRIBER
+}
+
+model City {
+  id   String @id @default(uuid())
+  name String
+  User User[]
+}
+
+model Interest {
+  id   String @id @default(uuid())
+  name String @unique
+
+  profiles ProfileInterest[]
+
+  events EventInterest[]
+}
+
+model ProfileInterest {
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId String
+
+  interest   Interest @relation(fields: [interestId], references: [id])
+  interestId String
+
+  @@id([profileId, interestId])
+}
+
+model Profile {
+  id          String    @id @default(uuid())
+  avatar      String?
+  bio         String?
+  socialLinks String[]
+  dateOfBirth DateTime?
+
+  interests ProfileInterest[]
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  label       String                     
+  description String?                    
+
+  date        DateTime                   
+  duration    Float?                   
+  startTime   String?                    
+
+  location    String                    
+  locationLink String?                 
+
+  image       String?                   
+
+  difficulty  String?                   
+  maxParticipants Int?                  
+
+  isCancelled Boolean @default(false)   
+
+  creatorId   String
+  creator     User      @relation("CreatedEvents", fields: [creatorId], references: [id])
+  participants EventParticipant[]       
+  interests    EventInterest[]          
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model EventParticipant {
+  event     Event  @relation(fields: [eventId], references: [id])
+  eventId   String
+
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+
+  joinedAt  DateTime @default(now())
+
+  @@id([eventId, userId])
+}
+
+model EventInterest {
+  event     Event    @relation(fields: [eventId], references: [id])
+  eventId   String
+
+  interest  Interest @relation(fields: [interestId], references: [id])
+  interestId String
+
+  @@id([eventId, interestId])
+}
+
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String?
+  nickname String
+  role     UserRole @default(USER)
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
+  profile Profile?
+
+  
+  eventsCreated Event[] @relation("CreatedEvents")
+
+  eventsParticipated EventParticipant[]
+
+ 
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
