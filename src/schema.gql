@@ -1,0 +1,33 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  """This is best method"""
+  getAllUsers: [UserModel!]!
+}
+
+"""Модель пользователя (с исключением чувствительных данных)"""
+type UserModel {
+  cityId: String!
+  createdAt: DateTime!
+  email: String!
+  id: String!
+
+  """Имя пользователя"""
+  name: String
+  nickname: String!
+  role: UserRole!
+  updatedAt: DateTime!
+}
+
+enum UserRole {
+  ADMIN
+  SUBSCRIBER
+  USER
+}
