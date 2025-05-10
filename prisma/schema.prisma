@@ -58,7 +58,7 @@ model Event {
   description     String?
   date            DateTime
   duration        Float?
-  startTime       String?
+  startTime       String
   cityId          String
   location        String
   locationLink    String?
@@ -114,7 +114,7 @@ model User {
   id                 String             @id @default(uuid())
   email              String             @unique
   password           String
-  name               String?
+  name               String
   nickname           String
   role               UserRole           @default(USER)
   cityId             String

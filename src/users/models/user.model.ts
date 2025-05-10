@@ -1,5 +1,6 @@
 import { Field, ObjectType, registerEnumType } from '@nestjs/graphql';
 import { UserRole } from '@prisma/client';
+import { ProfileModel } from './profile.model';
 
 registerEnumType(UserRole, {
   name: 'UserRole',
@@ -13,10 +14,10 @@ export class UserModel {
   id: string;
 
   @Field(() => String, {
-    nullable: true,
+    nullable: false,
     description: 'Имя пользователя',
   })
-  name?: string;
+  name: string;
 
   @Field(() => String)
   nickname: string;
@@ -35,4 +36,7 @@ export class UserModel {
 
   @Field(() => Date)
   updatedAt: Date;
+
+  @Field(() => ProfileModel, { nullable: true })
+  profile?: ProfileModel | null;
 }

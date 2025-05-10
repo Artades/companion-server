@@ -2,14 +2,52 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type AuthModel {
+  accessToken: String!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
 
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  login(data: LoginInput!): AuthModel!
+  logout: Boolean!
+  refresh: AuthModel!
+  register(data: RegisterInput!): AuthModel!
+}
+
+type ProfileModel {
+  avatar: String
+  bio: String
+  dateOfBirth: DateTime
+  id: String!
+  socialLinks: [String!]
+}
+
 type Query {
-  """This is best method"""
-  getAllUsers: [UserModel!]!
+  """Receiving all users. Available only for admins"""
+  getAll: [UserModel!]!
+
+  """Receiving current user"""
+  getMe: UserModel!
+
+  """Receiving user by unique id"""
+  getOneById: UserModel!
+}
+
+input RegisterInput {
+  city: String!
+  email: String!
+  name: String!
+  nickname: String!
+  password: String!
 }
 
 """Модель пользователя (с исключением чувствительных данных)"""
@@ -20,8 +58,9 @@ type UserModel {
   id: String!
 
   """Имя пользователя"""
-  name: String
+  name: String!
   nickname: String!
+  profile: ProfileModel
   role: UserRole!
   updatedAt: DateTime!
 }

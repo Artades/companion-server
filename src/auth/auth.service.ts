@@ -35,7 +35,6 @@ export class AuthService {
   async register(res: Response, input: RegisterInput) {
     const { name, email, password, city, nickname } = input;
 
-    // Проверка, существует ли пользователь
     const existUser = await this.prismaService.user.findUnique({
       where: { email },
     });
@@ -54,7 +53,6 @@ export class AuthService {
       });
     }
 
-    // Создание пользователя
     const user = await this.prismaService.user.create({
       data: {
         name,
