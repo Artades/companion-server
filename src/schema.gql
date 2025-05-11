@@ -6,10 +6,20 @@ type AuthModel {
   accessToken: String!
 }
 
+type CityModel {
+  id: String!
+  name: String!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type InterestModel {
+  id: String!
+  name: String!
+}
 
 input LoginInput {
   email: String!
@@ -21,6 +31,12 @@ type Mutation {
   logout: Boolean!
   refresh: AuthModel!
   register(data: RegisterInput!): AuthModel!
+  updateOneById(updateProfileData: UpdateUserProfileInput, updateUserData: UpdateUserInput!): UserModel!
+}
+
+type ProfileInterestModel {
+  interest: InterestModel!
+  interestId: String!
 }
 
 type ProfileModel {
@@ -28,6 +44,7 @@ type ProfileModel {
   bio: String
   dateOfBirth: DateTime
   id: String!
+  interests: [ProfileInterestModel!]
   socialLinks: [String!]
 }
 
@@ -50,14 +67,26 @@ input RegisterInput {
   password: String!
 }
 
+input UpdateUserInput {
+  city: String
+  name: String
+  nickname: String
+}
+
+input UpdateUserProfileInput {
+  avatar: String
+  bio: String
+  dateOfBirth: String
+  interests: [String!]
+  socialLinks: [String!]
+}
+
 """Модель пользователя (с исключением чувствительных данных)"""
 type UserModel {
-  cityId: String!
+  city: CityModel!
   createdAt: DateTime!
   email: String!
   id: String!
-
-  """Имя пользователя"""
   name: String!
   nickname: String!
   profile: ProfileModel

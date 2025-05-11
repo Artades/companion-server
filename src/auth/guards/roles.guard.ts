@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { UserRole } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { RequestWithUser } from '../interfaces/reqWithUser.interface';
+import { RequestWithUser } from '../interfaces/req-with-user.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

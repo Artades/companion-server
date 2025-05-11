@@ -6,6 +6,7 @@ import { getGqlConfig } from './config/gql.config';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { CitiesModule } from './cities/cities.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     PrismaModule,
     AuthModule,
+    CitiesModule,
   ],
 })
 export class AppModule {}
