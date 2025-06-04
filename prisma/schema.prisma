@@ -110,21 +110,35 @@ model EventInterest {
   @@id([eventId, interestId])
 }
 
+model Friendship {
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+  status    FriendshipStatuses
+  user   User @relation("UserFriendships", fields: [userId], references: [id])
+  friend User @relation("FriendOfUser", fields: [friendId], references: [id])
+
+  @@id([userId, friendId])
+}
+
 model User {
-  id                 String             @id @default(uuid())
-  email              String             @unique
-  password           String
-  name               String
-  nickname           String
-  role               UserRole           @default(USER)
-  cityId             String
-  createdAt          DateTime           @default(now()) @map("created_at")
-  updatedAt          DateTime           @updatedAt @map("updated_at")
-  eventsCreated      Event[]            @relation("CreatedEvents")
-  eventsParticipated EventParticipant[]
-  reviews            EventReview[]
-  profile            Profile?
-  city               City               @relation(fields: [cityId], references: [id])
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String
+  nickname String
+  role     UserRole @default(USER)
+
+  createdAt              DateTime           @default(now()) @map("created_at")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+  eventsCreated          Event[]            @relation("CreatedEvents")
+  eventsParticipated     EventParticipant[]
+  reviews                EventReview[]
+  profile                Profile?
+  cityId                 String
+  city                   City               @relation(fields: [cityId], references: [id])
+  sentFriendRequests     Friendship[]       @relation("UserFriendships")
+  receivedFriendRequests Friendship[]       @relation("FriendOfUser")
 
   @@map("users")
 }
@@ -151,4 +165,9 @@ enum MediaType {
 enum EventPrivacyType {
   PRIVATE
   PUBLIC
+}
+enum  FriendshipStatuses  {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

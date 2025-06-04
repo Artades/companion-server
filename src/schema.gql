@@ -56,7 +56,10 @@ type Query {
   getMe: UserModel!
 
   """Receiving user by unique id"""
-  getOneById: UserModel!
+  getOneById(id: String!): UserModel!
+
+  """Recieving recommended users simmiliar to current user"""
+  getRecommendedToCurrent: [UserModel!]!
 }
 
 input RegisterInput {

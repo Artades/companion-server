@@ -36,7 +36,7 @@ export class UsersResolver {
     description: 'Receiving user by unique id',
   })
   @Authorization()
-  async getOneById(@CurrentUser('id') id: string) {
+  async getOneById(@Args('id') id: string) {
     return await this.userService.findOneById(id);
   }
 
@@ -49,5 +49,14 @@ export class UsersResolver {
     profileData?: UpdateUserProfileInput,
   ) {
     return await this.userService.updateOneById(userId, input, profileData);
+  }
+
+  @Query(() => [UserModel], {
+    name: 'getRecommendedToCurrent',
+    description: 'Recieving recommended users simmiliar to current user',
+  })
+  @Authorization()
+  async getRecommendedToCurrent(@CurrentUser('id') id: string) {
+    return await this.userService.getRecommendedToCurrent(id);
   }
 }
