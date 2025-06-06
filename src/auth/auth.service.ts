@@ -13,6 +13,7 @@ import type { Request, Response } from 'express';
 import { isDev } from '../utils/isDev';
 import { RegisterInput } from './inputs/register.input';
 import { LoginInput } from './inputs/login.input';
+import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -63,7 +64,6 @@ export class AuthService {
       },
     });
 
-    // Авторизация и возврат токенов
     return this.auth(res, user.id);
   }
 
@@ -71,23 +71,22 @@ export class AuthService {
     const { email, password } = input;
 
     const user = await this.prismaService.user.findUnique({
-      where: {
-        email,
-      },
-      select: {
-        id: true,
-        password: true,
-      },
+      where: { email },
+      select: { id: true, password: true },
     });
 
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException('Вход по паролю невозможен, используйте OAuth');
+    }
+
     const isValidPassword: boolean = await verify(user.password, password);
 
     if (!isValidPassword) {
-      throw new NotFoundException('Пользователь не найден');
+      throw new UnauthorizedException('Неверный пароль');
     }
 
     return this.auth(res, user.id);
@@ -142,7 +141,7 @@ export class AuthService {
     return user;
   }
 
-  private auth(res: Response, id: string) {
+  public auth(res: Response, id: string) {
     const { accessToken, refreshToken } = this.generateTokens(id);
 
     this.setCookie(res, refreshToken, new Date(Date.now() + 1000 * 60 * 60 * 24 * 7));
@@ -175,5 +174,37 @@ export class AuthService {
       secure: !isDev(this.configService),
       sameSite: 'lax',
     });
+  }
+
+  async findOrCreateGoogleUser(googleUser: { email: string; name: string }): Promise<User> {
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: { email: googleUser.email },
+      });
+
+      if (user) return user;
+
+      const generatedNickname = googleUser.name.replace(/\s+/g, '').toLowerCase();
+      const defaultCity = await this.prismaService.city.findFirst({
+        where: { name: 'Алматы' },
+        select: { id: true },
+      });
+
+      if (!defaultCity) throw new Error('Default city not found');
+
+      const userData: Prisma.UserCreateInput = {
+        email: googleUser.email,
+        name: googleUser.name,
+        nickname: generatedNickname,
+        city: {
+          connect: { id: defaultCity.id },
+        },
+      };
+
+      return await this.prismaService.user.create({ data: userData });
+    } catch (error) {
+      console.error('❌ Error in findOrCreateGoogleUser:', error);
+      throw new Error('Failed to find or create Google user');
+    }
   }
 }

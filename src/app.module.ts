@@ -7,6 +7,8 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CitiesModule } from './cities/cities.module';
+import { GoogleOauthController } from './google/google-oauth.controller';
+import { GoogleOauthModule } from './google/google-oauth.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { CitiesModule } from './cities/cities.module';
     PrismaModule,
     AuthModule,
     CitiesModule,
+    GoogleOauthModule,
   ],
+  controllers: [GoogleOauthController],
 })
 export class AppModule {}
