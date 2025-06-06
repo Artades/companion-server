@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { GoogleOauthController } from './google-oauth.controller';
-import { AuthModule } from '../auth/auth.module'; // Для доступа к AuthService
+import { AuthModule } from '../auth/auth.module';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { PrismaModule } from '../prisma/prisma.module';
 
