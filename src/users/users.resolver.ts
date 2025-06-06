@@ -6,6 +6,7 @@ import { User, UserRole } from '@prisma/client';
 import { Authorization } from 'src/auth/decorators/authorization.decorator';
 import { UpdateUserInput } from './inputs/update-user.input';
 import { UpdateUserProfileInput } from './inputs/update-profile.input';
+import { FullUser } from './interfaces/full-user.interface';
 
 @Resolver()
 export class UsersResolver {
@@ -56,7 +57,54 @@ export class UsersResolver {
     description: 'Recieving recommended users simmiliar to current user',
   })
   @Authorization()
-  async getRecommendedToCurrent(@CurrentUser('id') id: string) {
+  async getRecommendedToCurrent(@CurrentUser('id') id: string): Promise<FullUser[]> {
     return await this.userService.getRecommendedToCurrent(id);
+  }
+
+  @Mutation(() => Boolean)
+  @Authorization()
+  async sendFriendRequest(
+    @CurrentUser('id') currentUserId: string,
+    @Args('friendId') friendId: string,
+  ) {
+    await this.userService.sendFriendRequest(currentUserId, friendId);
+    return true;
+  }
+  @Mutation(() => Boolean)
+  @Authorization()
+  async rejectFriendRequest(
+    @CurrentUser('id') currentUserId: string,
+    @Args('friendId') friendId: string,
+  ) {
+    await this.userService.rejectFriendRequest(currentUserId, friendId);
+    return true;
+  }
+  @Mutation(() => Boolean)
+  @Authorization()
+  async acceptFriendRequest(
+    @CurrentUser('id') currentUserId: string,
+    @Args('friendId') friendId: string,
+  ) {
+    await this.userService.acceptFriendRequest(currentUserId, friendId);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  @Authorization()
+  async removeFriend(@CurrentUser('id') currentUserId: string, @Args('friendId') friendId: string) {
+    await this.userService.removeFriend(currentUserId, friendId);
+    return true;
+  }
+
+  @Mutation(() => [UserModel])
+  @Authorization()
+  async getFriends(@Args('userId') userId: string): Promise<FullUser[]> {
+    return await this.userService.getFriends(userId);
+  }
+
+  @Mutation(() => [UserModel])
+  @Authorization()
+  async getPendingReceivedRequests(@CurrentUser('id') currentUserId: string): Promise<FullUser[]> {
+    return await this.userService.getPendingReceivedRequests(currentUserId);
   }
 }

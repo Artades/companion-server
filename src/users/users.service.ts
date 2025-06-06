@@ -134,7 +134,7 @@ export class UserService {
     });
   }
 
-  async updateInterests(profileId: string, interests: string[]): Promise<void> {
+  private async updateInterests(profileId: string, interests: string[]): Promise<void> {
     const existingInterests = await this.prismaService.interest.findMany({
       where: { name: { in: interests } },
     });

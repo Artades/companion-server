@@ -27,10 +27,16 @@ input LoginInput {
 }
 
 type Mutation {
+  acceptFriendRequest(friendId: String!): Boolean!
+  getFriends(userId: String!): [UserModel!]!
+  getPendingReceivedRequests: [UserModel!]!
   login(data: LoginInput!): AuthModel!
   logout: Boolean!
   refresh: AuthModel!
   register(data: RegisterInput!): AuthModel!
+  rejectFriendRequest(friendId: String!): Boolean!
+  removeFriend(friendId: String!): Boolean!
+  sendFriendRequest(friendId: String!): Boolean!
   updateOneById(updateProfileData: UpdateUserProfileInput, updateUserData: UpdateUserInput!): UserModel!
 }
 
