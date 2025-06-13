@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CitiesModule } from './cities/cities.module';
 import { GoogleOauthController } from './google/google-oauth.controller';
 import { GoogleOauthModule } from './google/google-oauth.module';
+// import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { GoogleOauthModule } from './google/google-oauth.module';
     AuthModule,
     CitiesModule,
     GoogleOauthModule,
+    // EventsModule,
   ],
   controllers: [GoogleOauthController],
 })
