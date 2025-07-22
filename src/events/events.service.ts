@@ -42,4 +42,36 @@ export class EventsService {
       take: input.take,
     });
   }
+
+  async getEventById(eventId: string): Promise<Event> {
+    const foundEvent = await this.prismaService.event.findFirst({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!foundEvent) {
+      throw new NotFoundException('Событие с таким id не найдено.');
+    }
+
+    return foundEvent;
+  }
+
+  async getCreatedEvents(userId: string): Promise<Event[]> {
+    const foundEvents = await this.prismaService.event.findMany({
+      where: {
+        creatorId: userId,
+      },
+    });
+    const foundUser = await this.userService.findOneById(userId);
+
+    if (!foundUser) {
+      throw new NotFoundException('Такого пользователя не существует');
+    }
+    if (!foundEvents.length) {
+      throw new NotFoundException('Событий с таким создателем не найдено.');
+    }
+
+    return foundEvents;
+  }
 }
