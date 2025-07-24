@@ -6,7 +6,7 @@ import { CityModel } from 'src/cities/models/city.model';
 import { EventMedia } from './event-media.model';
 import { EventInterest } from './event-interest.model';
 import { EventParticipant } from './event-participant.model';
-import { EventReview } from './event-review.model';
+import { EventReview } from 'src/reviews/models/review.model';
 
 registerEnumType(EventDifficulty, { name: 'EventDifficulty' });
 registerEnumType(EventPrivacyType, { name: 'EventPrivacyType' });

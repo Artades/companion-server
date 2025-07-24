@@ -2,7 +2,7 @@ import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { UserModel } from 'src/users/models/user.model';
 
 @ObjectType()
-export class EventReview {
+export class ReviewModel {
   @Field(() => ID)
   id: string;
 

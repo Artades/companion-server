@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/users/users.service';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
 
+
 @Injectable()
 export class EventsService {
   constructor(
@@ -74,4 +75,29 @@ export class EventsService {
 
     return foundEvents;
   }
+ async getParticipatedEvents(userId: string): Promise<Event[]> {
+  const events = await this.prismaService.event.findMany({
+    where: {
+      participants: {
+        some: {
+          userId: userId,
+        },
+      },
+    },
+  });
+
+  if (!events.length) {
+    throw new NotFoundException('Нет событий, в которых участвует пользователь');
+  }
+
+  return events;
+}
+//  async rateEvent(userId: string, input: RateEventInput): Promise<Event> {
+// try {
+//   const {rateAmount, eventId} = input;
+//   return await this.prismaService.event.update({where: {id: eventId}, data: {}})
+// } catch (error) {
+  
+// }
+//  }
 }

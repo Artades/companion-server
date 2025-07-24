@@ -6,7 +6,7 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { User } from '@prisma/client';
 import { Authorization } from 'src/auth/decorators/authorization.decorator';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
-import { RateEventInput } from './inputs/rate-event.input';
+;
 
 @Resolver()
 export class EventsResolver {
@@ -38,9 +38,5 @@ export class EventsResolver {
     return await this.eventsService.getParticipatedEvents(userId);
   }
 
-  @Mutation(() => EventModel)
-  @Authorization()
-  async rateEvent(@CurrentUser() user: User, @Args('rateEventInput') input: RateEventInput) {
-    return await this.eventsService.rateEvent(user.id, input);
-  }
+  
 }
