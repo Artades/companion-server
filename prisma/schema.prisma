@@ -50,6 +50,8 @@ model EventMedia {
   eventId    String
   uploadedAt DateTime  @default(now())
   event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  thumbnailOf Event? @relation("Thumbnail")
 }
 
 model Event {
@@ -62,7 +64,8 @@ model Event {
   cityId          String
   location        String
   locationLink    String?
-  image           String?
+  thumbnailId     String?            @unique
+  thumbnail       EventMedia?        @relation("Thumbnail", fields: [thumbnailId], references: [id])
   difficulty      EventDifficulty?
   maxParticipants Int?
   isCancelled     Boolean            @default(false)
@@ -113,10 +116,10 @@ model EventInterest {
 model Friendship {
   userId    String
   friendId  String
-  createdAt DateTime @default(now())
+  createdAt DateTime           @default(now())
   status    FriendshipStatuses
-  user   User @relation("UserFriendships", fields: [userId], references: [id])
-  friend User @relation("FriendOfUser", fields: [friendId], references: [id])
+  user      User               @relation("UserFriendships", fields: [userId], references: [id])
+  friend    User               @relation("FriendOfUser", fields: [friendId], references: [id])
 
   @@id([userId, friendId])
 }
@@ -166,7 +169,8 @@ enum EventPrivacyType {
   PRIVATE
   PUBLIC
 }
-enum  FriendshipStatuses  {
+
+enum FriendshipStatuses {
   PENDING
   ACCEPTED
   REJECTED

@@ -9,4 +9,17 @@ export class CityService {
   async findAll(): Promise<City[]> {
     return this.prismaService.city.findMany();
   }
+
+  async findByName(name: string): Promise<City | null> {
+    return this.prismaService.city.findFirst({where: {name}})
+  }
+  async create(name: string): Promise<City> {
+    const isExists = await this.findByName(name);
+
+    if(isExists) {
+      throw new Error(`Город ${name} уже существует`);
+    }
+
+    return await this.prismaService.city.create({data: {name}});
+  }
 }

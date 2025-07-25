@@ -11,6 +11,7 @@ import { GoogleOauthController } from './google/google-oauth.controller';
 import { GoogleOauthModule } from './google/google-oauth.module';
 // import { EventsModule } from './events/events.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     CitiesModule,
     GoogleOauthModule,
     ReviewsModule,
+    MediaModule,
     // EventsModule,
   ],
   controllers: [GoogleOauthController],
