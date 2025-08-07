@@ -3,10 +3,11 @@ import { EventsService } from './events.service';
 import { Query } from '@nestjs/graphql';
 import { EventModel } from './models/event.model';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
-import { User } from '@prisma/client';
+import { Event, User } from '@prisma/client';
 import { Authorization } from 'src/auth/decorators/authorization.decorator';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
 import { CreateEventInput } from './inputs/create-event.input';
+
 @Resolver()
 export class EventsResolver {
   constructor(private readonly eventsService: EventsService) {}
@@ -39,9 +40,10 @@ export class EventsResolver {
   @Mutation(() => EventModel)
   @Authorization()
   async createEvent(
-    @CurrentUser() user: User,
+     @CurrentUser() user: User,
     @Args('input') input: CreateEventInput,
-  ): Promise<EventModel> {
-    return this.eventsService.createEvent(user.id, input);
+  ): Promise<Event> {
+    console.log(input)
+    return await this.eventsService.createEvent(input, user.id);
   }
 }

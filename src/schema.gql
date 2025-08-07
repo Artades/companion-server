@@ -11,10 +11,107 @@ type CityModel {
   name: String!
 }
 
+input CreateEventInput {
+  city: String!
+  date: DateTime!
+  description: String
+  difficulty: EventDifficulty
+  duration: Float
+  interests: [String!]
+  label: String!
+  location: String!
+  locationLink: String
+  maxParticipants: Int
+  media: [UploadMediaInput!]
+  privacyType: EventPrivacyType!
+  startTime: String!
+  thumbnail: UploadMediaInput
+}
+
+input CreateReviewInput {
+  content: String
+  eventId: String!
+  rating: Int!
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+enum EventDifficulty {
+  EASY
+  HARD
+  MODERATE
+}
+
+type EventInterest {
+  eventId: String!
+  interest: Interest!
+  interestId: String!
+}
+
+type EventMedia {
+  caption: String
+  eventId: String!
+  id: ID!
+  order: Float!
+  type: MediaType!
+  uploadedAt: DateTime!
+  url: String!
+}
+
+type EventModel {
+  city: CityModel!
+  cityId: String!
+  createdAt: DateTime!
+  creator: UserModel!
+  creatorId: String!
+  date: DateTime!
+  description: String
+  difficulty: EventDifficulty
+  duration: Float
+  id: ID!
+  image: String
+  interests: [EventInterest!]!
+  isCancelled: Boolean!
+  label: String!
+  location: String!
+  locationLink: String
+  maxParticipants: Float
+  media: [EventMedia!]!
+  participants: [EventParticipant!]!
+  privacyType: EventPrivacyType!
+  reviews: [ReviewModel!]!
+  startTime: String!
+  updatedAt: DateTime!
+}
+
+type EventParticipant {
+  eventId: String!
+  joinedAt: DateTime!
+  user: UserModel!
+  userId: String!
+}
+
+enum EventPrivacyType {
+  PRIVATE
+  PUBLIC
+}
+
+input GetRecommendedEventsInput {
+  afterDate: DateTime
+  cityId: String
+  difficulty: EventDifficulty
+  interestIds: [String!]
+  skip: Int! = 0
+  take: Int! = 10
+}
+
+type Interest {
+  id: ID!
+  name: String!
+}
 
 type InterestModel {
   id: String!
@@ -26,8 +123,17 @@ input LoginInput {
   password: String!
 }
 
+enum MediaType {
+  GPX
+  IMAGE
+  OTHER
+  VIDEO
+}
+
 type Mutation {
   acceptFriendRequest(friendId: String!): Boolean!
+  createEvent(input: CreateEventInput!): EventModel!
+  deleteReview(eventId: String!): ReviewModel!
   getFriends(userId: String!): [UserModel!]!
   getPendingReceivedRequests: [UserModel!]!
   login(data: LoginInput!): AuthModel!
@@ -36,6 +142,7 @@ type Mutation {
   register(data: RegisterInput!): AuthModel!
   rejectFriendRequest(friendId: String!): Boolean!
   removeFriend(friendId: String!): Boolean!
+  reviewEvent(input: CreateReviewInput!): ReviewModel!
   sendFriendRequest(friendId: String!): Boolean!
   updateOneById(updateProfileData: UpdateUserProfileInput, updateUserData: UpdateUserInput!): UserModel!
 }
@@ -57,15 +164,21 @@ type ProfileModel {
 type Query {
   """Receiving all users. Available only for admins"""
   getAll: [UserModel!]!
+  getCreatedEvents(userId: String!): [EventModel!]!
+  getEvent(eventId: String!): EventModel!
 
   """Receiving current user"""
   getMe: UserModel!
 
   """Receiving user by unique id"""
   getOneById(id: String!): UserModel!
+  getParticipatedEvents(userId: String!): [EventModel!]!
+  getRecommendedEvents(userId: GetRecommendedEventsInput!): [EventModel!]!
 
   """Recieving recommended users simmiliar to current user"""
   getRecommendedToCurrent: [UserModel!]!
+  reviewsByEvent(eventId: String!): [ReviewModel!]!
+  reviewsByUser(userId: String!): [ReviewModel!]!
 }
 
 input RegisterInput {
@@ -74,6 +187,16 @@ input RegisterInput {
   name: String!
   nickname: String!
   password: String!
+}
+
+type ReviewModel {
+  content: String
+  createdAt: DateTime!
+  eventId: String!
+  id: ID!
+  rating: Float!
+  user: UserModel!
+  userId: String!
 }
 
 input UpdateUserInput {
@@ -88,6 +211,14 @@ input UpdateUserProfileInput {
   dateOfBirth: String
   interests: [String!]
   socialLinks: [String!]
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UploadMediaInput {
+  caption: String
+  file: Upload!
 }
 
 """Модель пользователя (с исключением чувствительных данных)"""

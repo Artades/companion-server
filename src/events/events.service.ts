@@ -97,7 +97,7 @@ export class EventsService {
     return events;
   }
 
-  async createEvent(input: CreateEventInput, userId: string) {
+  async createEvent(input: CreateEventInput, userId: string): Promise<Event> {
     let city: City;
 
     const foundCity = await this.cityService.findByName(input.city);
@@ -117,7 +117,6 @@ export class EventsService {
         startTime: input.startTime,
         location: input.location,
         locationLink: input.locationLink,
-        // image: input.image, ❌ больше не нужно, удаляем если не используешь
         difficulty: input.difficulty,
         privacyType: input.privacyType,
         isCancelled: false,
@@ -125,11 +124,25 @@ export class EventsService {
         cityId: city.id,
         interests: input.interests
           ? {
-              create: input.interests.map((interestId) => ({
-                interest: {
-                  connect: { id: interestId },
-                },
-              })),
+              create: await Promise.all(
+                input.interests.map(async (interestName) => {
+                  let interest = await this.prismaService.interest.findUnique({
+                    where: { name: interestName },
+                  });
+
+                  if (!interest) {
+                    interest = await this.prismaService.interest.create({
+                      data: { name: interestName },
+                    });
+                  }
+
+                  return {
+                    interest: {
+                      connect: { id: interest.id },
+                    },
+                  };
+                }),
+              ),
             }
           : undefined,
       },
@@ -142,6 +155,9 @@ export class EventsService {
         reviews: true,
       },
     });
+    if (input.thumbnail) {
+      await this.mediaService.uploadSingleMedia(event.id, input.thumbnail);
+    }
 
     let order = 1;
     if (input.media?.length) {

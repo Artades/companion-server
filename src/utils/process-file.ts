@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { FileUpload } from 'graphql-upload-ts';
 import { join } from 'path';
 import { createWriteStream } from 'fs';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 
 export async function processFile(file: FileUpload, isImage: boolean): Promise<{ filename: string; mimetype: string; path: string }> {
   const { createReadStream, filename, mimetype } = file;

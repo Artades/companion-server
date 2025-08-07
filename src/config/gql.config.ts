@@ -11,5 +11,6 @@ export const getGqlConfig = (configService: ConfigService): ApolloDriverConfig =
     sortSchema: true,
     playground: isDev(configService),
     context: ({ req, res }: GqlContent) => ({ req, res }),
+    csrfPrevention: false, // <-- это выключает CSRF-блокировку Apollo
   };
 };

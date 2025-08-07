@@ -28,8 +28,8 @@ export class CreateEventInput {
   @Field({ nullable: true })
   locationLink?: string;
 
-  @Field(() => [UploadMediaInput], { nullable: true })
-  image?: UploadMediaInput;
+  @Field(() => UploadMediaInput, { nullable: true })
+  thumbnail?: UploadMediaInput;
 
   @Field(() => [UploadMediaInput], { nullable: true })
   media?: UploadMediaInput[];
