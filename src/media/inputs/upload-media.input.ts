@@ -6,7 +6,4 @@ import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 export class UploadMediaInput {
   @Field(() => GraphQLUpload)
   file: Promise<FileUpload>;
-
-  @Field({ nullable: true })
-  caption?: string;
 }

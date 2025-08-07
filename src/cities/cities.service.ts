@@ -22,4 +22,11 @@ export class CityService {
 
     return await this.prismaService.city.create({data: {name}});
   }
+
+  async findOrCreate(name: string): Promise<City> {
+  const city = await this.findByName(name);
+  if (city) return city;
+  return this.create(name);
+}
+
 }

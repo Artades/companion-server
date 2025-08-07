@@ -206,7 +206,7 @@ input UpdateUserInput {
 }
 
 input UpdateUserProfileInput {
-  avatar: String
+  avatar: UploadMediaInput
   bio: String
   dateOfBirth: String
   interests: [String!]
@@ -217,7 +217,6 @@ input UpdateUserProfileInput {
 scalar Upload
 
 input UploadMediaInput {
-  caption: String
   file: Upload!
 }
 

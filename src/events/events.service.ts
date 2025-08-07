@@ -101,12 +101,7 @@ export class EventsService {
     let city: City;
 
     const foundCity = await this.cityService.findByName(input.city);
-
-    if (!foundCity) {
-      city = await this.cityService.create(input.city);
-    } else {
-      city = foundCity;
-    }
+    city = foundCity ?? (await this.cityService.create(input.city));
 
     const event = await this.prismaService.event.create({
       data: {
@@ -137,9 +132,7 @@ export class EventsService {
                   }
 
                   return {
-                    interest: {
-                      connect: { id: interest.id },
-                    },
+                    interest: { connect: { id: interest.id } },
                   };
                 }),
               ),
@@ -155,15 +148,33 @@ export class EventsService {
         reviews: true,
       },
     });
-    if (input.thumbnail) {
-      await this.mediaService.uploadSingleMedia(event.id, input.thumbnail);
-    }
 
     let order = 1;
+
+
+    if (input.thumbnail) {
+      const media = await this.mediaService.uploadSingleMedia( input.thumbnail );
+
+      await this.prismaService.eventMedia.create({
+        data: {
+          eventId: event.id,
+          mediaId: media.id,
+          order: order++,
+        },
+      });
+    }
+
+
     if (input.media?.length) {
-      for (const media of input.media) {
-        await this.mediaService.uploadSingleMedia(event.id, media, order);
-        order++;
+      for (const file of input.media) {
+        const media = await this.mediaService.uploadSingleMedia(file );
+        await this.prismaService.eventMedia.create({
+          data: {
+            eventId: event.id,
+            mediaId: media.id,
+            order: order++,
+          },
+        });
       }
     }
 

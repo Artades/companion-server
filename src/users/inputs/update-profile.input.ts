@@ -1,12 +1,11 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { IsOptional, IsString, MaxLength, IsDateString, IsArray, IsUrl } from 'class-validator';
+import { UploadMediaInput } from 'src/media/inputs/upload-media.input';
 
 @InputType()
 export class UpdateUserProfileInput {
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsUrl()
-  avatar?: string;
+  @Field(() => UploadMediaInput, { nullable: true })
+  avatar?: UploadMediaInput;
 
   @Field(() => String, { nullable: true })
   @IsOptional()

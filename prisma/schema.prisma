@@ -32,7 +32,8 @@ model ProfileInterest {
 
 model Profile {
   id          String            @id @default(uuid())
-  avatar      String?
+  avatarId    String? 
+  avatar      Media?
   bio         String?
   socialLinks String[]
   dateOfBirth DateTime?
@@ -42,16 +43,29 @@ model Profile {
 }
 
 model EventMedia {
-  id         String    @id @default(uuid())
-  url        String
-  type       MediaType
+  id         String   @id @default(uuid())
   caption    String?
   order      Int
   eventId    String
-  uploadedAt DateTime  @default(now())
-  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  mediaId    String
+  uploadedAt DateTime @default(now())
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  media      Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   thumbnailOf Event? @relation("Thumbnail")
+}
+
+model Media {
+  id         String    @id @default(uuid())
+  url        String
+  type       MediaType
+  uploadedAt DateTime  @default(now())
+
+  eventMedia EventMedia[]
+  profile    Profile?     @relation(fields: [profileId], references: [id])
+  profileId  String? 
+
+  @@unique([profileId])
 }
 
 model Event {
