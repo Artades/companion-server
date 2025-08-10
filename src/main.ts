@@ -8,10 +8,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 4001;
+
   app.enableCors({
     origin: true,
     credentials: true,
   });
+  
   app.use(graphqlUploadExpress({maxFileSize: 10_000_000, maxFiles: 10}))
   app.use(cookieParser());
 

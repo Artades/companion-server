@@ -23,4 +23,7 @@ export class MediaService {
       },
     });
   }
+  async deleteMedia(mediaId: string) {
+    await this.prismaService.media.delete({where: {id: mediaId}})
+  }
 }

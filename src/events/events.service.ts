@@ -6,6 +6,7 @@ import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input
 import { CreateEventInput } from './inputs/create-event.input';
 import { CityService } from 'src/cities/cities.service';
 import { MediaService } from 'src/media/media.service';
+import { UpdateEventInput } from './inputs/update-event.input';
 
 @Injectable()
 export class EventsService {
@@ -47,7 +48,6 @@ export class EventsService {
       take: input.take,
     });
   }
-
   async getEventById(eventId: string): Promise<Event> {
     const foundEvent = await this.prismaService.event.findFirst({
       where: {
@@ -151,9 +151,8 @@ export class EventsService {
 
     let order = 1;
 
-
     if (input.thumbnail) {
-      const media = await this.mediaService.uploadSingleMedia( input.thumbnail );
+      const media = await this.mediaService.uploadSingleMedia(input.thumbnail);
 
       await this.prismaService.eventMedia.create({
         data: {
@@ -164,10 +163,9 @@ export class EventsService {
       });
     }
 
-
     if (input.media?.length) {
       for (const file of input.media) {
-        const media = await this.mediaService.uploadSingleMedia(file );
+        const media = await this.mediaService.uploadSingleMedia(file);
         await this.prismaService.eventMedia.create({
           data: {
             eventId: event.id,
@@ -177,6 +175,156 @@ export class EventsService {
         });
       }
     }
+
+    return event;
+  }
+  async updateEvent(input: UpdateEventInput, eventId: string, userId: string): Promise<Event> {
+    const userBelongsToEvent = await this.prismaService.eventParticipant.findUniqueOrThrow({
+      where: {
+        eventId_userId: {
+          eventId,
+          userId,
+        },
+      },
+    });
+
+    if (!userBelongsToEvent) {
+      throw new Error('Пользователь не может редактировать это событие');
+    }
+
+    const { media, existingMediaIds, thumbnail, interests: newInterests, ...restInput } = input;
+
+    if (newInterests) {
+      await this.prismaService.eventInterest.deleteMany({ where: { eventId } });
+
+      await Promise.all(
+        newInterests.map(async (name) => {
+          let interest = await this.prismaService.interest.findUnique({ where: { name } });
+
+          if (!interest) {
+            interest = await this.prismaService.interest.create({ data: { name } });
+          }
+
+          await this.prismaService.eventInterest.create({
+            data: {
+              eventId,
+              interestId: interest.id,
+            },
+          });
+        }),
+      );
+    }
+
+    if (existingMediaIds) {
+      const toDeleteMediaIds = await this.prismaService.eventMedia.findMany({
+        where: {
+          eventId,
+          mediaId: {
+            notIn: existingMediaIds,
+          },
+        },
+        select: { mediaId: true },
+      });
+
+      await this.prismaService.eventMedia.deleteMany({
+        where: {
+          eventId,
+          mediaId: {
+            in: toDeleteMediaIds.map((m) => m.mediaId),
+          },
+        },
+      });
+
+      for (const { mediaId } of toDeleteMediaIds) {
+        await this.mediaService.deleteMedia(mediaId);
+      }
+    }
+
+    let thumbnailMedia;
+    if (thumbnail) {
+      const uploaded = await this.mediaService.uploadSingleMedia(thumbnail);
+
+      thumbnailMedia = await this.prismaService.eventMedia.create({
+        data: {
+          eventId,
+          mediaId: uploaded.id,
+          order: 0,
+        },
+      });
+    }
+
+    if (thumbnailMedia) {
+      const existing = await this.prismaService.event.findUnique({ where: { id: eventId } });
+      if (existing?.thumbnailId) {
+        await this.mediaService.deleteMedia(existing.thumbnailId);
+      }
+    }
+
+    if (media?.length) {
+      const maxOrder = await this.prismaService.eventMedia.aggregate({
+        where: { eventId },
+        _max: { order: true },
+      });
+
+      let order = (maxOrder._max.order ?? 0) + 1;
+
+      for (const file of media) {
+        const uploaded = await this.mediaService.uploadSingleMedia(file);
+        await this.prismaService.eventMedia.create({
+          data: {
+            eventId,
+            mediaId: uploaded.id,
+            order: order++,
+          },
+        });
+      }
+    }
+
+    const updated = await this.prismaService.event.update({
+      where: { id: eventId },
+      data: {
+        ...restInput,
+        ...(thumbnailMedia && { thumbnailId: thumbnailMedia.mediaId }),
+      },
+      include: {
+        city: true,
+        creator: true,
+        interests: { include: { interest: true } },
+        participants: true,
+        media: { include: { media: true } },
+        reviews: true,
+      },
+    });
+
+    return updated;
+  }
+
+  async cancelEvent(userId: string, eventId: string): Promise<Event> {
+    const userBelongsToEvent = await this.prismaService.eventParticipant.findUniqueOrThrow({
+      where: {
+        eventId_userId: {
+          eventId,
+          userId,
+        },
+      },
+    });
+
+    const isCreator =
+      (await this.prismaService.event.count({
+        where: { id: eventId, creatorId: userId },
+      })) > 0;
+
+    if (!userBelongsToEvent || !isCreator) {
+      throw new Error('Пользователь не может отменить событие');
+    }
+
+    const event = this.prismaService.event.update({
+      where: { id: eventId },
+      data: {
+        isCancelled: true,
+      },
+    });
+
 
     return event;
   }
