@@ -32,7 +32,7 @@ model ProfileInterest {
 
 model Profile {
   id          String            @id @default(uuid())
-  avatarId    String? 
+  avatarId    String?
   avatar      Media?
   bio         String?
   socialLinks String[]
@@ -63,7 +63,7 @@ model Media {
 
   eventMedia EventMedia[]
   profile    Profile?     @relation(fields: [profileId], references: [id])
-  profileId  String? 
+  profileId  String?
 
   @@unique([profileId])
 }
@@ -93,6 +93,8 @@ model Event {
   media           EventMedia[]
   participants    EventParticipant[]
   reviews         EventReview[]
+
+  invitations EventInvitation[]
 }
 
 model EventReview {
@@ -127,6 +129,21 @@ model EventInterest {
   @@id([eventId, interestId])
 }
 
+model EventInvitation {
+  id            String           @id @default(uuid())
+  eventId       String
+  invitedUserId String
+  invitedById   String
+  status        InvitationStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+
+  event       Event @relation(fields: [eventId], references: [id])
+  invitedUser User  @relation("InvitationsReceived", fields: [invitedUserId], references: [id])
+  invitedBy   User  @relation("InvitationsSent", fields: [invitedById], references: [id])
+
+  @@unique([eventId, invitedUserId])
+}
+
 model Friendship {
   userId    String
   friendId  String
@@ -157,6 +174,9 @@ model User {
   sentFriendRequests     Friendship[]       @relation("UserFriendships")
   receivedFriendRequests Friendship[]       @relation("FriendOfUser")
 
+  invitationsSent     EventInvitation[] @relation("InvitationsSent")
+  invitationsReceived EventInvitation[] @relation("InvitationsReceived")
+
   @@map("users")
 }
 
@@ -185,6 +205,12 @@ enum EventPrivacyType {
 }
 
 enum FriendshipStatuses {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum InvitationStatus {
   PENDING
   ACCEPTED
   REJECTED
