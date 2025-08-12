@@ -300,19 +300,8 @@ export class EventsService {
   }
 
   async cancelEvent(userId: string, eventId: string): Promise<Event> {
-    const userBelongsToEvent = await this.prismaService.eventParticipant.findUniqueOrThrow({
-      where: {
-        eventId_userId: {
-          eventId,
-          userId,
-        },
-      },
-    });
-
-    const isCreator =
-      (await this.prismaService.event.count({
-        where: { id: eventId, creatorId: userId },
-      })) > 0;
+    const userBelongsToEvent = await this.checkUserBelongsToEvent(userId, eventId);
+    const isCreator = await this.checkEventCreator(userId, eventId);
 
     if (!userBelongsToEvent || !isCreator) {
       throw new Error('Пользователь не может отменить событие');
@@ -325,7 +314,31 @@ export class EventsService {
       },
     });
 
-
     return event;
+  }
+
+  async checkEventCreator(userId: string, eventId: string): Promise<boolean> {
+    const isCreator =
+      (await this.prismaService.event.count({
+        where: { id: eventId, creatorId: userId },
+      })) > 0;
+    return isCreator;
+  }
+
+  async checkUserBelongsToEvent(userId: string, eventId: string): Promise<boolean> {
+    const user = await this.prismaService.eventParticipant.findUniqueOrThrow({
+      where: {
+        eventId_userId: {
+          eventId,
+          userId,
+        },
+      },
+    });
+
+    if (user) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }

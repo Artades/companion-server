@@ -85,13 +85,11 @@ export class UserService {
   // Город
   const existingCity = city ? await this.cityService.findOrCreate(city) : null;
 
-  // Аватар
   let avatarMedia;
   if (avatar) {
     avatarMedia = await this.mediaService.uploadSingleMedia(avatar);
   }
 
-  // Обновляем пользователя
   const updatedUser = await this.prismaService.user.update({
     where: { id },
     data: {

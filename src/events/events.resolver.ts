@@ -7,6 +7,7 @@ import { Event, User } from '@prisma/client';
 import { Authorization } from 'src/auth/decorators/authorization.decorator';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
 import { CreateEventInput } from './inputs/create-event.input';
+import { UpdateEventInput } from './inputs/update-event.input';
 
 @Resolver()
 export class EventsResolver {
@@ -40,10 +41,19 @@ export class EventsResolver {
   @Mutation(() => EventModel)
   @Authorization()
   async createEvent(
-     @CurrentUser() user: User,
+    @CurrentUser() user: User,
     @Args('input') input: CreateEventInput,
   ): Promise<Event> {
-    console.log(input)
     return await this.eventsService.createEvent(input, user.id);
+  }
+
+  @Mutation(() => EventModel)
+  @Authorization()
+  async updateEvent(
+    @CurrentUser() user: User,
+    @Args('eventId') eventId: string,
+    @Args('input') input: UpdateEventInput,
+  ): Promise<Event> {
+    return await this.eventsService.updateEvent(input, eventId, user.id);
   }
 }

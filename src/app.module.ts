@@ -13,6 +13,7 @@ import { GoogleOauthModule } from './google/google-oauth.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { MediaModule } from './media/media.module';
 import { EventsModule } from './events/events.module';
+import { EventInvitationsModule } from './event-invitations/event-invitations.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EventsModule } from './events/events.module';
     ReviewsModule,
     MediaModule,
     EventsModule,
+    EventInvitationsModule,
   ],
   controllers: [GoogleOauthController],
 })
