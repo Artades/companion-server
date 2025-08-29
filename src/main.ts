@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as cookieParser from 'cookie-parser';
 import { graphqlUploadExpress } from 'graphql-upload-ts';
+import { calculateDistance } from './utils/math/calc';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,5 +19,15 @@ async function bootstrap() {
   app.use(cookieParser());
 
   await app.listen(port);
+
+  const d = calculateDistance({a: {
+    latitude: 0,
+    longitude: 0,
+  }, b: {
+    latitude: 0,
+    longitude: 1,
+  } })
+
+  console.log("Result: ",d )
 }
 bootstrap();

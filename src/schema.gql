@@ -51,6 +51,15 @@ type EventInterest {
   interestId: String!
 }
 
+type EventInvitationModel {
+  createdAt: DateTime!
+  eventId: String!
+  id: String!
+  invitedById: String!
+  invitedUserId: String!
+  status: InvitationStatus!
+}
+
 type EventMedia {
   caption: String
   eventId: String!
@@ -118,6 +127,12 @@ type InterestModel {
   name: String!
 }
 
+enum InvitationStatus {
+  ACCEPTED
+  PENDING
+  REJECTED
+}
+
 input LoginInput {
   email: String!
   password: String!
@@ -132,7 +147,10 @@ enum MediaType {
 
 type Mutation {
   acceptFriendRequest(friendId: String!): Boolean!
+  acceptInvitation(invitationId: String!): EventInvitationModel!
+  cancelInvitation(invitationId: String!): EventInvitationModel!
   createEvent(input: CreateEventInput!): EventModel!
+  declineInvitation(invitationId: String!): EventInvitationModel!
   deleteReview(eventId: String!): ReviewModel!
   getFriends(userId: String!): [UserModel!]!
   getPendingReceivedRequests: [UserModel!]!
@@ -144,6 +162,8 @@ type Mutation {
   removeFriend(friendId: String!): Boolean!
   reviewEvent(input: CreateReviewInput!): ReviewModel!
   sendFriendRequest(friendId: String!): Boolean!
+  sendInvitation(eventId: String!, receiverId: String!): EventInvitationModel!
+  updateEvent(eventId: String!, input: UpdateEventInput!): EventModel!
   updateOneById(updateProfileData: UpdateUserProfileInput, updateUserData: UpdateUserInput!): UserModel!
 }
 
@@ -177,6 +197,8 @@ type Query {
 
   """Recieving recommended users simmiliar to current user"""
   getRecommendedToCurrent: [UserModel!]!
+  listReceivedInvitations: [EventInvitationModel!]!
+  listSentInvitations: [EventInvitationModel!]!
   reviewsByEvent(eventId: String!): [ReviewModel!]!
   reviewsByUser(userId: String!): [ReviewModel!]!
 }
@@ -197,6 +219,23 @@ type ReviewModel {
   rating: Float!
   user: UserModel!
   userId: String!
+}
+
+input UpdateEventInput {
+  date: DateTime!
+  description: String
+  difficulty: EventDifficulty
+  duration: Float
+  existingMediaIds: [String!]
+  interests: [String!]
+  label: String!
+  location: String!
+  locationLink: String
+  maxParticipants: Int
+  media: [UploadMediaInput!]
+  privacyType: EventPrivacyType!
+  startTime: String!
+  thumbnail: UploadMediaInput
 }
 
 input UpdateUserInput {

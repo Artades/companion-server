@@ -9,5 +9,6 @@ import { CityService } from 'src/cities/cities.service';
 @Module({
   imports: [UsersModule], // 👈 обязательно
   providers: [EventsResolver, EventsService, MediaService, CityService],
+  exports: [EventsService]
 })
 export class EventsModule {}
