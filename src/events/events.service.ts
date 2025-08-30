@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { City, Event } from '@prisma/client';
+import { Event } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/users/users.service';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
@@ -98,10 +98,9 @@ export class EventsService {
   }
 
   async createEvent(input: CreateEventInput, userId: string): Promise<Event> {
-    let city: City;
-
     const foundCity = await this.cityService.findByName(input.city);
-    city = foundCity ?? (await this.cityService.create(input.city));
+
+    const city = foundCity ?? (await this.cityService.create(input.city));
 
     const event = await this.prismaService.event.create({
       data: {

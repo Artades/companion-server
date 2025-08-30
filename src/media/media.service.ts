@@ -11,10 +11,10 @@ export class MediaService {
 
   async uploadSingleMedia(input: UploadMediaInput) {
     const { file } = input;
-    const type = detectMediaType((await file).mimetype);
+    const type = detectMediaType((await file!).mimetype);
     const isImage = type === MediaType.IMAGE;
 
-    const uploadedFile = await processFile(await file, isImage);
+    const uploadedFile = await processFile(await file!, isImage);
 
     return this.prismaService.media.create({
       data: {
@@ -24,6 +24,6 @@ export class MediaService {
     });
   }
   async deleteMedia(mediaId: string) {
-    await this.prismaService.media.delete({where: {id: mediaId}})
+    await this.prismaService.media.delete({ where: { id: mediaId } });
   }
 }

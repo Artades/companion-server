@@ -32,7 +32,7 @@ export function calculateDistance<T extends Coords>({ a, b }: { a: T; b: T }): n
   return distance;
 }
 
-export function isInArea({a,b,R}: {a:Coords, b: Coords, R: number}):boolean {
-    const d = calculateDistance({a,b});
-    return R>=d;
+export function isInArea({ a, b, R }: { a: Coords; b: Coords; R: number }): boolean {
+  const d = calculateDistance({ a, b });
+  return R >= d;
 }

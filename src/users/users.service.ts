@@ -57,99 +57,64 @@ export class UserService {
     return await this.findOneById(id);
   }
 
- async updateOneById(
-  id: string,
-  updateUserData: UpdateUserInput,
-  updateUserProfileData?: UpdateUserProfileInput,
-): Promise<FullUser> {
-  const { name, nickname, city } = updateUserData || {};
-  const {
-    bio,
-    avatar,
-    socialLinks,
-    dateOfBirth,
-    interests,
-  } = updateUserProfileData || {};
+  async updateOneById(
+    id: string,
+    updateUserData: UpdateUserInput,
+    updateUserProfileData?: UpdateUserProfileInput,
+  ): Promise<FullUser> {
+    const { name, nickname, city } = updateUserData || {};
+    const { bio, avatar, socialLinks, dateOfBirth, interests } = updateUserProfileData || {};
 
-  const user = await this.prismaService.user.findUnique({
-    where: { id },
-    include: {
-      profile: { include: { interests: { include: { interest: true } } } },
-    },
-  });
+    const user = await this.prismaService.user.findUnique({
+      where: { id },
+      include: { profile: true },
+    });
 
-  if (!user) {
-    throw new NotFoundException('Пользователь не найден');
-  }
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
 
-  // Город
-  const existingCity = city ? await this.cityService.findOrCreate(city) : null;
+    const existingCity = city ? await this.cityService.findOrCreate(city) : null;
 
-  let avatarMedia;
-  if (avatar) {
-    avatarMedia = await this.mediaService.uploadSingleMedia(avatar);
-  }
+    const avatarMedia = avatar ? await this.mediaService.uploadSingleMedia(avatar) : null;
 
-  const updatedUser = await this.prismaService.user.update({
-    where: { id },
-    data: {
-      name,
-      nickname,
-      cityId: existingCity?.id,
-    },
-    include: {
-      profile: { include: { interests: { include: { interest: true } } } },
-    },
-  });
+    await this.prismaService.user.update({
+      where: { id },
+      data: {
+        name,
+        nickname,
+        cityId: existingCity?.id,
+      },
+    });
 
-  // Профиль
-  if (updatedUser.profile) {
+    const profileData = {
+      bio,
+      avatar: avatarMedia ? { connect: { id: avatarMedia.id } } : undefined,
+      socialLinks,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+    };
+
+    const profileId = user.profile
+      ? user.profile.id
+      : (await this.prismaService.profile.create({ data: { userId: id } })).id;
+
     await this.prismaService.profile.update({
-      where: { id: updatedUser.profile.id },
-      data: {
-        bio,
-        avatar: avatarMedia,
-        socialLinks,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      },
+      where: { id: profileId },
+      data: profileData,
     });
 
     if (interests?.length) {
-      await this.updateInterests(updatedUser.profile.id, interests);
+      await this.updateInterests(profileId, interests);
     }
-  } else {
-    const newProfile = await this.prismaService.profile.create({
-      data: {
-        userId: id,
-        bio,
-        avatar: avatarMedia,
-        socialLinks,
-        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+
+    return this.prismaService.user.findUniqueOrThrow({
+      where: { id },
+      include: {
+        city: true,
+        profile: { include: { interests: { include: { interest: true } } } },
       },
     });
-
-    if (interests?.length) {
-      await this.updateInterests(newProfile.id, interests);
-    }
   }
-
-  return this.prismaService.user.findUniqueOrThrow({
-    where: { id },
-    include: {
-      city: true,
-      profile: {
-        include: {
-          interests: {
-            include: {
-              interest: true,
-            },
-          },
-        },
-      },
-    },
-  });
-}
-
 
   private async updateInterests(profileId: string, interests: string[]): Promise<void> {
     const existingInterests = await this.prismaService.interest.findMany({

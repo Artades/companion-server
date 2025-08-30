@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { IsOptional, IsString, MaxLength, IsDateString, IsArray, IsUrl } from 'class-validator';
+import { IsOptional, IsString, MaxLength, IsDateString, IsArray } from 'class-validator';
 import { UploadMediaInput } from 'src/media/inputs/upload-media.input';
 
 @InputType()
@@ -22,7 +22,7 @@ export class UpdateUserProfileInput {
   @Field(() => String, { nullable: true })
   @IsOptional()
   @IsDateString()
-  dateOfBirth?: Date;
+  dateOfBirth?: string;
 
   @Field(() => [String], { nullable: true })
   @IsOptional()

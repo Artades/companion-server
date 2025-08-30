@@ -1,9 +1,8 @@
 import { InputType, Field } from '@nestjs/graphql';
 import { FileUpload, GraphQLUpload } from 'graphql-upload-ts';
 
-
 @InputType()
 export class UploadMediaInput {
   @Field(() => GraphQLUpload)
-  file: Promise<FileUpload>;
+  file: Promise<FileUpload> | undefined;
 }

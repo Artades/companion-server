@@ -11,22 +11,21 @@ export class CityService {
   }
 
   async findByName(name: string): Promise<City | null> {
-    return this.prismaService.city.findFirst({where: {name}})
+    return this.prismaService.city.findFirst({ where: { name } });
   }
   async create(name: string): Promise<City> {
     const isExists = await this.findByName(name);
 
-    if(isExists) {
+    if (isExists) {
       throw new Error(`Город ${name} уже существует`);
     }
 
-    return await this.prismaService.city.create({data: {name}});
+    return await this.prismaService.city.create({ data: { name } });
   }
 
   async findOrCreate(name: string): Promise<City> {
-  const city = await this.findByName(name);
-  if (city) return city;
-  return this.create(name);
-}
-
+    const city = await this.findByName(name);
+    if (city) return city;
+    return this.create(name);
+  }
 }

@@ -5,8 +5,7 @@ import { EventsModule } from 'src/events/events.module';
 import { UsersModule } from 'src/users/users.module';
 
 @Module({
-   imports: [EventsModule, UsersModule],
+  imports: [EventsModule, UsersModule],
   providers: [EventInvitationsResolver, EventInvitationsService],
-  
 })
 export class EventInvitationsModule {}
