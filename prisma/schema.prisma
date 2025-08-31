@@ -95,6 +95,9 @@ model Event {
   reviews         EventReview[]
 
   invitations EventInvitation[]
+
+  latitude Float
+  longitude Float
 }
 
 model EventReview {

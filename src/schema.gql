@@ -11,8 +11,14 @@ type CityModel {
   name: String!
 }
 
+input CoordinatesInput {
+  latitude: Float!
+  longitude: Float!
+}
+
 input CreateEventInput {
   city: String!
+  coords: CoordinatesInput
   date: DateTime!
   description: String
   difficulty: EventDifficulty
@@ -113,8 +119,10 @@ input GetRecommendedEventsInput {
   cityId: String
   difficulty: EventDifficulty
   interestIds: [String!]
+  searchRadius: Int! = 5
   skip: Int! = 0
   take: Int! = 10
+  userCoords: CoordinatesInput
 }
 
 type Interest {

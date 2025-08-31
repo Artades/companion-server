@@ -7,6 +7,7 @@ import { CreateEventInput } from './inputs/create-event.input';
 import { CityService } from 'src/cities/cities.service';
 import { MediaService } from 'src/media/media.service';
 import { UpdateEventInput } from './inputs/update-event.input';
+import { isInRadius } from 'src/utils/math/calc';
 
 @Injectable()
 export class EventsService {
@@ -20,9 +21,10 @@ export class EventsService {
   async getRecommendedEvents(userId: string, input: GetRecommendedEventsInput): Promise<Event[]> {
     const user = await this.userService.getCurrentUser(userId);
     if (!user) throw new NotFoundException('User not found');
+
     const userInterestIds = user.profile?.interests?.map((i) => i.interestId) ?? [];
 
-    return await this.prismaService.event.findMany({
+    const rawEvents = await this.prismaService.event.findMany({
       where: {
         isCancelled: false,
         privacyType: 'PUBLIC',
@@ -30,24 +32,34 @@ export class EventsService {
         cityId: input.cityId ?? undefined,
         difficulty: input.difficulty ?? undefined,
         interests: input.interestIds?.length
-          ? {
-              some: {
-                interestId: { in: input.interestIds },
-              },
-            }
-          : {
-              some: {
-                interestId: { in: userInterestIds },
-              },
-            },
+          ? { some: { interestId: { in: input.interestIds } } }
+          : userInterestIds.length
+            ? { some: { interestId: { in: userInterestIds } } }
+            : undefined,
       },
-      orderBy: {
-        date: 'asc',
-      },
+      orderBy: { date: 'asc' },
       skip: input.skip,
       take: input.take,
     });
+
+    const { userCoords: center, searchRadius: radius } = input;
+
+    if (center && radius) {
+      return rawEvents.filter(
+        (event) =>
+          event.latitude !== null &&
+          event.longitude !== null &&
+          isInRadius({
+            center,
+            point: { latitude: event.latitude, longitude: event.longitude },
+            radiusKm: radius,
+          }),
+      );
+    }
+
+    return rawEvents;
   }
+
   async getEventById(eventId: string): Promise<Event> {
     const foundEvent = await this.prismaService.event.findFirst({
       where: {
@@ -116,6 +128,8 @@ export class EventsService {
         isCancelled: false,
         creatorId: userId,
         cityId: city.id,
+        latitude: input.coords.latitude,
+        longitude: input.coords.longitude,
         interests: input.interests
           ? {
               create: await Promise.all(

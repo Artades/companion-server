@@ -1,7 +1,14 @@
-import { Field, InputType, Float, Int } from '@nestjs/graphql';
+import { Field, InputType, Float, Int, registerEnumType } from '@nestjs/graphql';
 import { EventDifficulty, EventPrivacyType } from '@prisma/client';
 import { UploadMediaInput } from 'src/media/inputs/upload-media.input';
+import { CoordinatesInput } from './get-recommended-events.input';
 
+registerEnumType(EventDifficulty, {
+  name: 'EventDifficulty',
+});
+registerEnumType(EventPrivacyType, {
+  name: 'EventPrivacyType',
+});
 @InputType()
 export class CreateEventInput {
   @Field()
@@ -42,6 +49,8 @@ export class CreateEventInput {
 
   @Field(() => EventPrivacyType)
   privacyType: EventPrivacyType;
+  @Field(() => CoordinatesInput, { nullable: true })
+  coords: CoordinatesInput;
 
   @Field(() => [String], { nullable: true })
   interests?: string[];

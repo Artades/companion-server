@@ -1,5 +1,13 @@
-import { Field, InputType, Int } from '@nestjs/graphql';
+import { Field, Float, InputType, Int } from '@nestjs/graphql';
 import { EventDifficulty } from '@prisma/client';
+@InputType()
+export class CoordinatesInput {
+  @Field(() => Float)
+  latitude: number;
+
+  @Field(() => Float)
+  longitude: number;
+}
 
 @InputType()
 export class GetRecommendedEventsInput {
@@ -20,4 +28,10 @@ export class GetRecommendedEventsInput {
 
   @Field(() => Int, { defaultValue: 10 })
   take?: number;
+
+  @Field(() => CoordinatesInput, { nullable: true })
+  userCoords?: CoordinatesInput;
+
+  @Field(() => Int, { defaultValue: 5 })
+  searchRadius?: number;
 }
