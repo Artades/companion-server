@@ -12,8 +12,11 @@ export class ReviewsResolver {
 
   @Mutation(() => ReviewModel)
   @Authorization()
-  async reviewEvent(@CurrentUser() user: User, @Args('input') input: CreateReviewInput):Promise<EventReview> {
-    return await this.reviewsService.createReview(user.id, input)
+  async reviewEvent(
+    @CurrentUser() user: User,
+    @Args('input') input: CreateReviewInput,
+  ): Promise<EventReview> {
+    return await this.reviewsService.createReview(user.id, input);
   }
 
   @Mutation(() => ReviewModel)
@@ -25,16 +28,12 @@ export class ReviewsResolver {
   }
 
   @Query(() => [ReviewModel])
-  async reviewsByEvent(
-    @Args('eventId') eventId: string,
-  ): Promise<EventReview[]> {
+  async reviewsByEvent(@Args('eventId') eventId: string): Promise<EventReview[]> {
     return this.reviewsService.getReviewsByEvent(eventId);
   }
 
   @Query(() => [ReviewModel])
-  async reviewsByUser(
-    @Args('userId') userId: string,
-  ): Promise<EventReview[]> {
+  async reviewsByUser(@Args('userId') userId: string): Promise<EventReview[]> {
     return this.reviewsService.getReviewsByUser(userId);
   }
 }

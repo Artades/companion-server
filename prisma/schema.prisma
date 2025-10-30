@@ -96,7 +96,7 @@ model Event {
 
   invitations EventInvitation[]
 
-  latitude Float
+  latitude  Float
   longitude Float
 }
 
@@ -179,8 +179,23 @@ model User {
 
   invitationsSent     EventInvitation[] @relation("InvitationsSent")
   invitationsReceived EventInvitation[] @relation("InvitationsReceived")
+  Notification        Notification[]
 
   @@map("users")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 enum UserRole {
@@ -219,3 +234,18 @@ enum InvitationStatus {
   REJECTED
 }
 
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  EVENT_INVITE
+  EVENT_REMINDER
+  EVENT_UPDATE
+  COMMENT
+  LIKE
+  SYSTEM
+
+  FOLLOW
+  MENTION
+  BADGE_EARNED
+  POST_PUBLISHED
+}
