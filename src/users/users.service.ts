@@ -150,31 +150,52 @@ export class UserService {
     const currentUser = await this.findOneById(id);
 
     const currentUserInterestIds = currentUser.profile?.interests?.map((i) => i.interestId) ?? [];
+    const friendships = await this.prismaService.friendship.findMany({
+      where: {
+        OR: [
+          { userId: id, status: 'ACCEPTED' },
+          { friendId: id, status: 'ACCEPTED' },
+        ],
+      },
+    });
+    const currentUserFriendsIds = friendships.map((f) => (f.userId === id ? f.friendId : f.userId));
+    const friendsOfFriends = await this.prismaService.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { userId: { in: currentUserFriendsIds } },
+          { friendId: { in: currentUserFriendsIds } },
+        ],
+      },
+    });
+
+    const friendsOfFriendsIds = friendsOfFriends
+      .map((f) => (f.userId === id ? f.friendId : f.userId))
+      .filter((uid) => uid !== id && !currentUserFriendsIds.includes(uid));
 
     const recommendedUsers = await this.prismaService.user.findMany({
       where: {
+        id: { notIn: [id, ...currentUserFriendsIds] },
         cityId: currentUser.cityId,
-        profile: {
-          interests: {
-            some: {
-              interestId: {
-                in: currentUserInterestIds,
+        OR: [
+          {
+            profile: {
+              interests: {
+                some: {
+                  interestId: { in: currentUserInterestIds },
+                },
               },
             },
           },
-        },
-        NOT: {
-          id: id,
-        },
+          { id: { in: friendsOfFriendsIds } },
+        ],
       },
       include: {
         city: true,
         profile: {
           include: {
             interests: {
-              include: {
-                interest: true,
-              },
+              include: { interest: true },
             },
           },
         },
