@@ -1,4 +1,3 @@
-// utils/convert-image.util.ts
 import sharp from 'sharp';
 
 export async function convertImage(buffer: Buffer): Promise<Buffer> {

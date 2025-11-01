@@ -8,6 +8,7 @@ import { CityService } from 'src/cities/cities.service';
 import { MediaService } from 'src/media/media.service';
 import { UpdateEventInput } from './inputs/update-event.input';
 import { isInRadius } from 'src/utils/math/calc';
+import { SearchEventsInput } from './inputs/search-event.input';
 
 @Injectable()
 export class EventsService {
@@ -353,5 +354,32 @@ export class EventsService {
     } else {
       return false;
     }
+  }
+
+  async searchEvent(input: SearchEventsInput): Promise<Event[]> {
+    const { searchQuery, take, skip } = input;
+
+    if (!searchQuery?.trim()) return [];
+
+    const events = await this.prismaService.event.findMany({
+      where: {
+        OR: [
+          { label: { contains: searchQuery, mode: 'insensitive' } },
+          { description: { contains: searchQuery, mode: 'insensitive' } },
+          { city: { name: { contains: searchQuery, mode: 'insensitive' } } },
+        ],
+      },
+      take,
+      skip,
+      orderBy: { date: 'asc' },
+      include: {
+        city: true,
+        interests: { include: { interest: true } },
+        creator: { select: { id: true, name: true } },
+        media: { include: { media: true } },
+      },
+    });
+
+    return events;
   }
 }
