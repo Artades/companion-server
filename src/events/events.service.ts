@@ -9,6 +9,7 @@ import { MediaService } from 'src/media/media.service';
 import { UpdateEventInput } from './inputs/update-event.input';
 import { isInRadius } from 'src/utils/math/calc';
 import { SearchEventsInput } from './inputs/search-event.input';
+import { eventBus } from 'src/core/event-bus';
 
 @Injectable()
 export class EventsService {
@@ -189,7 +190,10 @@ export class EventsService {
         });
       }
     }
-
+    eventBus.emit('event.created', {
+      eventId: event.id,
+      creatorId: userId,
+    });
     return event;
   }
   async updateEvent(input: UpdateEventInput, eventId: string, userId: string): Promise<Event> {
@@ -310,6 +314,11 @@ export class EventsService {
       },
     });
 
+    eventBus.emit('event.updated', {
+      eventId,
+      updatedBy: userId,
+    });
+
     return updated;
   }
 
@@ -321,11 +330,15 @@ export class EventsService {
       throw new Error('Пользователь не может отменить событие');
     }
 
-    const event = this.prismaService.event.update({
+    const event = await this.prismaService.event.update({
       where: { id: eventId },
       data: {
         isCancelled: true,
       },
+    });
+    eventBus.emit('event.cancelled', {
+      eventId,
+      cancelledBy: userId,
     });
 
     return event;
