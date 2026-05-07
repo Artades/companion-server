@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Event } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/users/users.service';
@@ -70,7 +70,7 @@ export class EventsService {
     });
 
     if (!foundEvent) {
-      throw new NotFoundException('Событие с таким id не найдено.');
+      throw new NotFoundException('Event with this id was not found.');
     }
 
     return foundEvent;
@@ -85,14 +85,15 @@ export class EventsService {
     const foundUser = await this.userService.findOneById(userId);
 
     if (!foundUser) {
-      throw new NotFoundException('Такого пользователя не существует');
+      throw new NotFoundException('User does not exist.');
     }
     if (!foundEvents.length) {
-      throw new NotFoundException('Событий с таким создателем не найдено.');
+      throw new NotFoundException('No events found for this creator.');
     }
 
     return foundEvents;
   }
+
   async getParticipatedEvents(userId: string): Promise<Event[]> {
     const events = await this.prismaService.event.findMany({
       where: {
@@ -105,7 +106,7 @@ export class EventsService {
     });
 
     if (!events.length) {
-      throw new NotFoundException('Нет событий, в которых участвует пользователь');
+      throw new NotFoundException('No events found for this participant.');
     }
 
     return events;
@@ -175,12 +176,17 @@ export class EventsService {
     if (input.thumbnail) {
       const media = await this.mediaService.uploadSingleMedia(input.thumbnail);
 
-      await this.prismaService.eventMedia.create({
+      const thumbnail = await this.prismaService.eventMedia.create({
         data: {
           eventId: event.id,
           mediaId: media.id,
           order: order++,
         },
+      });
+
+      await this.prismaService.event.update({
+        where: { id: event.id },
+        data: { thumbnailId: thumbnail.id },
       });
     }
 
@@ -213,18 +219,19 @@ export class EventsService {
       },
     });
   }
+
   async updateEvent(input: UpdateEventInput, eventId: string, userId: string): Promise<Event> {
-    const userBelongsToEvent = await this.prismaService.eventParticipant.findUniqueOrThrow({
-      where: {
-        eventId_userId: {
-          eventId,
-          userId,
-        },
-      },
+    const event = await this.prismaService.event.findUnique({
+      where: { id: eventId },
+      select: { id: true, creatorId: true, thumbnailId: true },
     });
 
-    if (!userBelongsToEvent) {
-      throw new Error('Пользователь не может редактировать это событие');
+    if (!event) {
+      throw new NotFoundException('Event with this id was not found.');
+    }
+
+    if (event.creatorId !== userId) {
+      throw new ForbiddenException('Only the creator can edit this event.');
     }
 
     const { media, existingMediaIds, thumbnail, interests: newInterests, ...restInput } = input;
@@ -251,26 +258,28 @@ export class EventsService {
     }
 
     if (existingMediaIds) {
-      const toDeleteMediaIds = await this.prismaService.eventMedia.findMany({
+      const toDeleteMedia = await this.prismaService.eventMedia.findMany({
         where: {
           eventId,
+          id: {
+            not: event.thumbnailId ?? undefined,
+          },
           mediaId: {
             notIn: existingMediaIds,
           },
         },
-        select: { mediaId: true },
+        select: { id: true, mediaId: true },
       });
 
       await this.prismaService.eventMedia.deleteMany({
         where: {
-          eventId,
-          mediaId: {
-            in: toDeleteMediaIds.map((m) => m.mediaId),
+          id: {
+            in: toDeleteMedia.map((m) => m.id),
           },
         },
       });
 
-      for (const { mediaId } of toDeleteMediaIds) {
+      for (const { mediaId } of toDeleteMedia) {
         await this.mediaService.deleteMedia(mediaId);
       }
     }
@@ -286,13 +295,6 @@ export class EventsService {
           order: 0,
         },
       });
-    }
-
-    if (thumbnailMedia) {
-      const existing = await this.prismaService.event.findUnique({ where: { id: eventId } });
-      if (existing?.thumbnailId) {
-        await this.mediaService.deleteMedia(existing.thumbnailId);
-      }
     }
 
     if (media?.length) {
@@ -319,7 +321,7 @@ export class EventsService {
       where: { id: eventId },
       data: {
         ...restInput,
-        ...(thumbnailMedia && { thumbnailId: thumbnailMedia.mediaId }),
+        ...(thumbnailMedia && { thumbnailId: thumbnailMedia.id }),
       },
       include: {
         city: true,
@@ -331,6 +333,21 @@ export class EventsService {
       },
     });
 
+    if (thumbnailMedia && event.thumbnailId) {
+      const previousThumbnail = await this.prismaService.eventMedia.findUnique({
+        where: { id: event.thumbnailId },
+        select: { mediaId: true },
+      });
+
+      await this.prismaService.eventMedia.delete({
+        where: { id: event.thumbnailId },
+      });
+
+      if (previousThumbnail) {
+        await this.mediaService.deleteMedia(previousThumbnail.mediaId);
+      }
+    }
+
     eventBus.emit('event.updated', {
       eventId,
       updatedBy: userId,
@@ -340,11 +357,17 @@ export class EventsService {
   }
 
   async cancelEvent(userId: string, eventId: string): Promise<Event> {
-    const userBelongsToEvent = await this.checkUserBelongsToEvent(userId, eventId);
-    const isCreator = await this.checkEventCreator(userId, eventId);
+    const foundEvent = await this.prismaService.event.findUnique({
+      where: { id: eventId },
+      select: { creatorId: true },
+    });
 
-    if (!userBelongsToEvent || !isCreator) {
-      throw new Error('Пользователь не может отменить событие');
+    if (!foundEvent) {
+      throw new NotFoundException('Event with this id was not found.');
+    }
+
+    if (foundEvent.creatorId !== userId) {
+      throw new ForbiddenException('Only the creator can cancel this event.');
     }
 
     const event = await this.prismaService.event.update({
@@ -370,7 +393,7 @@ export class EventsService {
   }
 
   async checkUserBelongsToEvent(userId: string, eventId: string): Promise<boolean> {
-    const user = await this.prismaService.eventParticipant.findUniqueOrThrow({
+    const user = await this.prismaService.eventParticipant.findUnique({
       where: {
         eventId_userId: {
           eventId,
@@ -379,11 +402,7 @@ export class EventsService {
       },
     });
 
-    if (user) {
-      return true;
-    } else {
-      return false;
-    }
+    return Boolean(user);
   }
 
   async searchEvent(input: SearchEventsInput): Promise<Event[]> {
@@ -393,6 +412,8 @@ export class EventsService {
 
     const events = await this.prismaService.event.findMany({
       where: {
+        isCancelled: false,
+        privacyType: 'PUBLIC',
         OR: [
           { label: { contains: searchQuery, mode: 'insensitive' } },
           { description: { contains: searchQuery, mode: 'insensitive' } },

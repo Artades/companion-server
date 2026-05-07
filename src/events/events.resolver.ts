@@ -8,6 +8,7 @@ import { Authorization } from 'src/auth/decorators/authorization.decorator';
 import { GetRecommendedEventsInput } from './inputs/get-recommended-events.input';
 import { CreateEventInput } from './inputs/create-event.input';
 import { UpdateEventInput } from './inputs/update-event.input';
+import { SearchEventsInput } from './inputs/search-event.input';
 
 @Resolver()
 export class EventsResolver {
@@ -38,6 +39,13 @@ export class EventsResolver {
   async getParticipatedEvents(@Args('userId') userId: string) {
     return await this.eventsService.getParticipatedEvents(userId);
   }
+
+  @Query(() => [EventModel])
+  @Authorization()
+  async searchEvents(@Args('input') input: SearchEventsInput) {
+    return await this.eventsService.searchEvent(input);
+  }
+
   @Mutation(() => EventModel)
   @Authorization()
   async createEvent(
@@ -55,5 +63,11 @@ export class EventsResolver {
     @Args('input') input: UpdateEventInput,
   ): Promise<Event> {
     return await this.eventsService.updateEvent(input, eventId, user.id);
+  }
+
+  @Mutation(() => EventModel)
+  @Authorization()
+  async cancelEvent(@CurrentUser() user: User, @Args('eventId') eventId: string): Promise<Event> {
+    return await this.eventsService.cancelEvent(user.id, eventId);
   }
 }
