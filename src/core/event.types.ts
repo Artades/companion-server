@@ -13,4 +13,10 @@ export type AppEvents = {
     eventId: string;
     cancelledBy: string;
   };
+
+  'event.invitation.sent': {
+    eventId: string;
+    senderId: string;
+    receiverId: string;
+  };
 };

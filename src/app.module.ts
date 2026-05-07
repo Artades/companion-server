@@ -14,7 +14,6 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { MediaModule } from './media/media.module';
 import { EventsModule } from './events/events.module';
 import { EventInvitationsModule } from './event-invitations/event-invitations.module';
-import { NotificationsModule } from './notifications/notifications.module';
 import { NotificationModule } from './notification/notification.module';
 
 @Module({
@@ -37,7 +36,6 @@ import { NotificationModule } from './notification/notification.module';
     MediaModule,
     EventsModule,
     EventInvitationsModule,
-    NotificationsModule,
     NotificationModule,
   ],
   controllers: [GoogleOauthController],

@@ -96,8 +96,8 @@ model Event {
 
   invitations EventInvitation[]
 
-  latitude  Float
-  longitude Float
+  latitude  Float?
+  longitude Float?
 }
 
 model EventReview {

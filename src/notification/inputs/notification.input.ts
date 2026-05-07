@@ -4,17 +4,11 @@ import { NotificationType } from '@prisma/client';
 
 @InputType()
 export class CreateNotificationInput {
-  @Field(() => String)
-  title: string;
-
-  @Field(() => String)
-  message: string;
-
   @Field(() => NotificationType)
   type: NotificationType;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  data?: Record<string, unknown> | null;
+  data?: Record<string, unknown>;
 
   @Field(() => ID)
   userId: string;

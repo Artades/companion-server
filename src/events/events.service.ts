@@ -130,8 +130,14 @@ export class EventsService {
         isCancelled: false,
         creatorId: userId,
         cityId: city.id,
-        latitude: input.coords.latitude,
-        longitude: input.coords.longitude,
+        latitude: input.coords?.latitude,
+        longitude: input.coords?.longitude,
+
+        participants: {
+          create: {
+            userId,
+          },
+        },
         interests: input.interests
           ? {
               create: await Promise.all(
@@ -194,7 +200,18 @@ export class EventsService {
       eventId: event.id,
       creatorId: userId,
     });
-    return event;
+
+    return this.prismaService.event.findUniqueOrThrow({
+      where: { id: event.id },
+      include: {
+        city: true,
+        creator: true,
+        interests: { include: { interest: true } },
+        participants: true,
+        media: { include: { media: true } },
+        reviews: true,
+      },
+    });
   }
   async updateEvent(input: UpdateEventInput, eventId: string, userId: string): Promise<Event> {
     const userBelongsToEvent = await this.prismaService.eventParticipant.findUniqueOrThrow({

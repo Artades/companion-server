@@ -1,4 +1,5 @@
 import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
+import { Prisma } from '@prisma/client';
 import { GraphQLJSON } from 'graphql-type-json';
 import { NotificationType } from '@prisma/client';
 
@@ -9,20 +10,20 @@ export class NotificationModel {
   @Field(() => ID)
   id: string;
 
-  @Field(() => String)
+  @Field()
   title: string;
 
-  @Field(() => String)
+  @Field()
   message: string;
 
   @Field(() => NotificationType)
   type: NotificationType;
 
-  @Field(() => Boolean)
+  @Field()
   read: boolean;
 
   @Field(() => GraphQLJSON, { nullable: true })
-  data: unknown;
+  data: Prisma.JsonValue | null;
 
   @Field()
   createdAt: Date;

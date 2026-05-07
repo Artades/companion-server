@@ -1,34 +1,66 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Notification, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { buildNotificationContent } from './notification.config';
 import { CreateNotificationInput } from './inputs/notification.input';
-import { Notification, NotificationType } from '@prisma/client';
-import { NotificationPayloads, NotificationTemplates } from './notification.config';
-
-type StrictNotificationInput<T extends NotificationType> = Omit<
-  CreateNotificationInput,
-  'type' | 'data'
-> & {
-  type: T;
-  data: NotificationPayloads[T];
-};
 
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create<T extends NotificationType>(
-    input: StrictNotificationInput<T>,
-  ): Promise<Notification> {
-    const template = NotificationTemplates[input.type];
-    const payload = input.data;
+  async findByUserId(userId: string): Promise<Notification[]> {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
-    return this.prismaService.notification.create({
+  async markAsRead(notificationId: string, userId: string): Promise<Notification> {
+    const result = await this.prisma.notification.updateMany({
+      where: {
+        id: notificationId,
+        userId,
+      },
       data: {
-        title: template.title,
-        message: template.message(payload),
+        read: true,
+      },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    return this.prisma.notification.findUniqueOrThrow({
+      where: {
+        id: notificationId,
+      },
+    });
+  }
+
+  async markAllAsRead(userId: string): Promise<boolean> {
+    await this.prisma.notification.updateMany({
+      where: {
+        userId,
+        read: false,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    return true;
+  }
+
+  async create(input: CreateNotificationInput): Promise<Notification> {
+    const content = buildNotificationContent(input.type, input.data);
+
+    return this.prisma.notification.create({
+      data: {
+        title: content.title,
+        message: content.message,
         type: input.type,
         read: false,
-        data: input.data,
+        data: content.data as Prisma.InputJsonObject,
         userId: input.userId,
       },
     });

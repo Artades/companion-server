@@ -50,7 +50,7 @@ export class CreateEventInput {
   @Field(() => EventPrivacyType)
   privacyType: EventPrivacyType;
   @Field(() => CoordinatesInput, { nullable: true })
-  coords: CoordinatesInput;
+  coords?: CoordinatesInput;
 
   @Field(() => [String], { nullable: true })
   interests?: string[];

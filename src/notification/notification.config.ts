@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 
 export type NotificationPayloads = {
@@ -9,67 +10,132 @@ export type NotificationPayloads = {
   [NotificationType.COMMENT]: { from: string; post: string };
   [NotificationType.LIKE]: { from: string; post: string };
   [NotificationType.SYSTEM]: { text?: string };
-
   [NotificationType.FOLLOW]: { follower: string };
   [NotificationType.MENTION]: { from: string; context: string };
   [NotificationType.BADGE_EARNED]: { badge: string };
   [NotificationType.POST_PUBLISHED]: { post: string };
 };
 
-type NotificationTemplate<T extends NotificationType> = {
+export type NotificationPayload<T extends NotificationType> = NotificationPayloads[T];
+
+type Template<T extends NotificationType> = {
   title: string;
-  message: (payload: NotificationPayloads[T]) => string;
+  message: (data: NotificationPayload<T>) => string;
+  validate: (data: unknown) => data is NotificationPayload<T>;
 };
 
-export const NotificationTemplates: {
-  [K in NotificationType]: NotificationTemplate<K>;
-} = {
+type NotificationTemplates = {
+  [T in NotificationType]: Template<T>;
+};
+
+function isObject(data: unknown): data is Record<string, unknown> {
+  return typeof data === 'object' && data !== null && !Array.isArray(data);
+}
+
+function hasString(data: Record<string, unknown>, key: string): boolean {
+  return typeof data[key] === 'string' && data[key].trim().length > 0;
+}
+
+export const NotificationTemplates: NotificationTemplates = {
   [NotificationType.FRIEND_REQUEST]: {
     title: 'Запрос в друзья',
-    message: ({ from }) => `${from} хочет добавить вас в друзья.`,
+    message: (data) => `${data.from} хочет добавить вас в друзья`,
+    validate: (data): data is NotificationPayload<'FRIEND_REQUEST'> =>
+      isObject(data) && hasString(data, 'from'),
   },
+
   [NotificationType.FRIEND_ACCEPTED]: {
     title: 'Заявка принята',
-    message: ({ from }) => `${from} принял(а) вашу заявку в друзья.`,
+    message: (data) => `${data.from} принял(а) вашу заявку`,
+    validate: (data): data is NotificationPayload<'FRIEND_ACCEPTED'> =>
+      isObject(data) && hasString(data, 'from'),
   },
+
   [NotificationType.EVENT_INVITE]: {
-    title: 'Приглашение на событие',
-    message: ({ from, event }) => `${from} пригласил(а) вас на событие "${event}".`,
+    title: 'Приглашение',
+    message: (data) => `${data.from} пригласил вас на "${data.event}"`,
+    validate: (data): data is NotificationPayload<'EVENT_INVITE'> =>
+      isObject(data) && hasString(data, 'from') && hasString(data, 'event'),
   },
+
   [NotificationType.EVENT_REMINDER]: {
-    title: 'Напоминание о событии',
-    message: ({ event, time }) => `Скоро начнётся событие "${event}" (${time}).`,
+    title: 'Напоминание',
+    message: (data) => `Событие "${data.event}" скоро (${data.time})`,
+    validate: (data): data is NotificationPayload<'EVENT_REMINDER'> =>
+      isObject(data) && hasString(data, 'event') && hasString(data, 'time'),
   },
+
   [NotificationType.EVENT_UPDATE]: {
-    title: 'Изменение события',
-    message: ({ event }) => `Событие "${event}" было обновлено.`,
+    title: 'Обновление события',
+    message: (data) => `Событие "${data.event}" обновлено`,
+    validate: (data): data is NotificationPayload<'EVENT_UPDATE'> =>
+      isObject(data) && hasString(data, 'event'),
   },
+
   [NotificationType.COMMENT]: {
-    title: 'Новый комментарий',
-    message: ({ from, post }) => `${from} оставил(а) комментарий к "${post}".`,
+    title: 'Комментарий',
+    message: (data) => `${data.from} прокомментировал "${data.post}"`,
+    validate: (data): data is NotificationPayload<'COMMENT'> =>
+      isObject(data) && hasString(data, 'from') && hasString(data, 'post'),
   },
+
   [NotificationType.LIKE]: {
-    title: 'Новый лайк',
-    message: ({ from, post }) => `${from} понравилась ваша запись "${post}".`,
+    title: 'Лайк',
+    message: (data) => `${data.from} лайкнул "${data.post}"`,
+    validate: (data): data is NotificationPayload<'LIKE'> =>
+      isObject(data) && hasString(data, 'from') && hasString(data, 'post'),
   },
+
   [NotificationType.SYSTEM]: {
-    title: 'Системное уведомление',
-    message: ({ text }) => text || 'У вас новое уведомление.',
+    title: 'Система',
+    message: (data) => data.text || 'Новое уведомление',
+    validate: (data): data is NotificationPayload<'SYSTEM'> =>
+      data === undefined ||
+      (isObject(data) && (data.text === undefined || hasString(data, 'text'))),
   },
-  FOLLOW: {
-    title: '',
-    message: ({ follower }) => `${follower} подписался на вас`,
+
+  [NotificationType.FOLLOW]: {
+    title: 'Подписка',
+    message: (data) => `${data.follower} подписался на вас`,
+    validate: (data): data is NotificationPayload<'FOLLOW'> =>
+      isObject(data) && hasString(data, 'follower'),
   },
-  MENTION: {
-    title: 'Вас упомянули',
-    message: ({ from, context }) => `${from} упомянул(а) вас: "${context}"`,
+
+  [NotificationType.MENTION]: {
+    title: 'Упоминание',
+    message: (data) => `${data.from} упомянул вас: "${data.context}"`,
+    validate: (data): data is NotificationPayload<'MENTION'> =>
+      isObject(data) && hasString(data, 'from') && hasString(data, 'context'),
   },
-  BADGE_EARNED: {
-    title: 'Награда получена',
-    message: ({ badge }) => `Вы получили новый бейдж: "${badge}"`,
+
+  [NotificationType.BADGE_EARNED]: {
+    title: 'Бейдж',
+    message: (data) => `Вы получили "${data.badge}"`,
+    validate: (data): data is NotificationPayload<'BADGE_EARNED'> =>
+      isObject(data) && hasString(data, 'badge'),
   },
-  POST_PUBLISHED: {
-    title: 'Пост опубликован',
-    message: ({ post }) => `Ваш пост "${post}" опубликован.`,
+
+  [NotificationType.POST_PUBLISHED]: {
+    title: 'Пост',
+    message: (data) => `Пост "${data.post}" опубликован`,
+    validate: (data): data is NotificationPayload<'POST_PUBLISHED'> =>
+      isObject(data) && hasString(data, 'post'),
   },
 };
+
+export function buildNotificationContent<T extends NotificationType>(
+  type: T,
+  data: unknown,
+): { title: string; message: string; data: NotificationPayload<T> } {
+  const template = NotificationTemplates[type];
+
+  if (!template.validate(data)) {
+    throw new BadRequestException(`Invalid payload for notification type ${type}`);
+  }
+
+  return {
+    title: template.title,
+    message: template.message(data),
+    data,
+  };
+}

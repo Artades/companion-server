@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { EventInvitation, InvitationStatus } from '@prisma/client';
+import { eventBus } from 'src/core/event-bus';
 import { EventsService } from 'src/events/events.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/users/users.service';
@@ -58,7 +59,7 @@ export class EventInvitationsService {
       throw new ConflictException('Приглашение этому пользователю уже отправлено');
     }
 
-    return this.prismaService.eventInvitation.create({
+    const invitation = await this.prismaService.eventInvitation.create({
       data: {
         status: InvitationStatus.PENDING,
         eventId,
@@ -66,6 +67,14 @@ export class EventInvitationsService {
         invitedById: userId,
       },
     });
+
+    eventBus.emit('event.invitation.sent', {
+      eventId,
+      senderId: userId,
+      receiverId,
+    });
+
+    return invitation;
   }
 
   async acceptInvitation(userId: string, invitationId: string): Promise<EventInvitation> {
@@ -83,7 +92,6 @@ export class EventInvitationsService {
       throw new BadRequestException('Приглашение уже обработано');
     }
 
-    // Добавляем пользователя в участников события
     await this.prismaService.eventParticipant.create({
       data: {
         eventId: invitation.eventId,
