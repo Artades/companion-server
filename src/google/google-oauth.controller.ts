@@ -1,4 +1,5 @@
 import { Controller, Get, Req, Res } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Response, Request } from 'express';
 import { AuthService } from 'src/auth/auth.service';
 import { GoogleUser } from 'src/common/interfaces/google.interface';
@@ -6,7 +7,10 @@ import { GoogleAuthGuard } from './decorators/google.decorator';
 
 @Controller('auth/google')
 export class GoogleOauthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Get()
   @GoogleAuthGuard()
@@ -21,6 +25,9 @@ export class GoogleOauthController {
 
     const authTokens = this.authService.auth(res, user.id);
 
-    return res.redirect(`http://localhost:3000/?accessToken=${authTokens.accessToken}`);
+    const frontendUrl = new URL(this.configService.getOrThrow<string>('FRONTEND_URL'));
+    frontendUrl.searchParams.set('accessToken', authTokens.accessToken);
+
+    return res.redirect(frontendUrl.toString());
   }
 }
